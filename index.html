@@ -21,6 +21,15 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
             outline: none;
         }
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -28,18 +37,27 @@
     <div class="bg-white w-full max-w-lg p-6 sm:p-8 rounded-2xl shadow-lg">
         <!-- Header Section -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Calculadora de IVA (TIO RUDY)</h1>
+            <h1 class="text-3xl font-bold text-gray-800">Calculadora de IVA 🇦🇷</h1>
             <p class="text-gray-500 mt-2">Ingresá los montos brutos (con IVA incluido) de tu negocio.</p>
         </div>
 
         <!-- Form Inputs -->
         <div class="space-y-6">
-            <!-- Sales Input -->
+            <!-- Sales 10.5% Input -->
             <div class="input-group">
-                <label for="ventasBrutas" class="block text-sm font-medium text-gray-700 mb-2">📈 Total Bruto de Ventas (al 10,5%)</label>
+                <label for="ventasBrutas105" class="block text-sm font-medium text-gray-700 mb-2">📈 Total Bruto de Ventas (al 10,5%)</label>
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                    <input type="number" id="ventasBrutas" placeholder="552500" class="form-input w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg transition duration-150 ease-in-out focus:ring-blue-500 focus:border-blue-500">
+                    <input type="number" id="ventasBrutas105" placeholder="552500" class="form-input w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg transition duration-150 ease-in-out focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Sales 21% Input (NEW) -->
+            <div class="input-group">
+                <label for="ventasBrutas21" class="block text-sm font-medium text-gray-700 mb-2">📈 Total Bruto de Ventas (al 21%)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                    <input type="number" id="ventasBrutas21" placeholder="0" class="form-input w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg transition duration-150 ease-in-out focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </div>
             
@@ -111,13 +129,15 @@
          */
         function calcularIVA() {
             // 1. GET VALUES: Read inputs and convert them to numbers (or 0 if empty).
-            const ventasBrutas = parseFloat(document.getElementById('ventasBrutas').value) || 0;
+            const ventasBrutas105 = parseFloat(document.getElementById('ventasBrutas105').value) || 0;
+            const ventasBrutas21 = parseFloat(document.getElementById('ventasBrutas21').value) || 0; // New input
             const compras105 = parseFloat(document.getElementById('compras105').value) || 0;
             const compras21 = parseFloat(document.getElementById('compras21').value) || 0;
 
             // 2. CALCULATE VAT DEBIT (from sales)
-            // Formula: (Gross Amount / 1.105) * 0.105
-            const ivaVentas = (ventasBrutas / 1.105) * 0.105;
+            const ivaVentas105 = (ventasBrutas105 / 1.105) * 0.105;
+            const ivaVentas21 = (ventasBrutas21 / 1.21) * 0.21; // VAT from 21% sales
+            const totalDebitoFiscal = ivaVentas105 + ivaVentas21; // Sum of all sales VAT
 
             // 3. CALCULATE VAT CREDIT (from purchases)
             const ivaCompras105 = (compras105 / 1.105) * 0.105;
@@ -125,13 +145,13 @@
             const totalCreditoFiscal = ivaCompras105 + ivaCompras21;
 
             // 4. CALCULATE FINAL BALANCE
-            const saldoFinal = ivaVentas - totalCreditoFiscal;
+            const saldoFinal = totalDebitoFiscal - totalCreditoFiscal;
 
             // 5. DISPLAY RESULTS: Update the DOM with the calculated values.
             const resultadosDiv = document.getElementById('resultados');
             resultadosDiv.classList.remove('hidden'); // Make the results section visible
 
-            document.getElementById('debitoFiscal').innerText = formatoMoneda.format(ivaVentas);
+            document.getElementById('debitoFiscal').innerText = formatoMoneda.format(totalDebitoFiscal);
             document.getElementById('creditoFiscal').innerText = formatoMoneda.format(totalCreditoFiscal);
 
             const resultadoFinalDiv = document.getElementById('resultado-final');
@@ -154,7 +174,8 @@
          * Clears all input fields and hides the results section.
          */
         function limpiarCampos() {
-            document.getElementById('ventasBrutas').value = '';
+            document.getElementById('ventasBrutas105').value = '';
+            document.getElementById('ventasBrutas21').value = ''; // Clear new input
             document.getElementById('compras105').value = '';
             document.getElementById('compras21').value = '';
             document.getElementById('resultados').classList.add('hidden');
