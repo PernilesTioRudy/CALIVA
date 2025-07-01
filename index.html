@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de IVA para Comestibles (Argentina)</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to complement Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom focus ring color */
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white w-full max-w-lg p-6 sm:p-8 rounded-2xl shadow-lg">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Calculadora de IVA (TIO RUDY)</h1>
+            <p class="text-gray-500 mt-2">Ingresá los montos brutos (con IVA incluido) de tu negocio.</p>
+        </div>
+
+        <!-- Form Inputs -->
+        <div class="space-y-6">
+            <!-- Sales Input -->
+            <div class="input-group">
+                <label for="ventasBrutas" class="block text-sm font-medium text-gray-700 mb-2">📈 Total Bruto de Ventas (al 10,5%)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                    <input type="number" id="ventasBrutas" placeholder="552500" class="form-input w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg transition duration-150 ease-in-out focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <!-- Purchases 10.5% Input -->
+            <div class="input-group">
+                <label for="compras105" class="block text-sm font-medium text-gray-700 mb-2">🛒 Total Bruto de Compras (al 10,5%)</label>
+                 <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                    <input type="number" id="compras105" placeholder="110500" class="form-input w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg transition duration-150 ease-in-out focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Purchases 21% Input -->
+            <div class="input-group">
+                <label for="compras21" class="block text-sm font-medium text-gray-700 mb-2">🛒 Total Bruto de Compras (al 21%)</label>
+                 <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                    <input type="number" id="compras21" placeholder="121000" class="form-input w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg transition duration-150 ease-in-out focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+            <button class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg transition duration-300" onclick="limpiarCampos()">
+                Limpiar
+            </button>
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300" onclick="calcularIVA()">
+                Calcular IVA
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultados" class="mt-8 pt-6 border-t border-gray-200 hidden">
+            <div class="space-y-4">
+                <!-- Debit Result -->
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-gray-600">(+) IVA Débito Fiscal (ventas):</span>
+                    <span id="debitoFiscal" class="font-semibold text-gray-800">$0,00</span>
+                </div>
+                <!-- Credit Result -->
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-gray-600">(-) IVA Crédito Fiscal (compras):</span>
+                    <span id="creditoFiscal" class="font-semibold text-gray-800">$0,00</span>
+                </div>
+                <!-- Final Result -->
+                <div id="resultado-final" class="mt-4 p-4 rounded-lg text-center">
+                    <span id="etiquetaFinal" class="block text-xl font-bold"></span>
+                    <span id="ivaPagar" class="block text-3xl font-bold mt-1">$0,00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SCRIPT LOGIC ---
+
+        // Function to format numbers as Argentine Pesos (ARS)
+        const formatoMoneda = new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        /**
+         * Main function to calculate the VAT position.
+         * It reads the gross amounts, calculates debit and credit, and displays the result.
+         */
+        function calcularIVA() {
+            // 1. GET VALUES: Read inputs and convert them to numbers (or 0 if empty).
+            const ventasBrutas = parseFloat(document.getElementById('ventasBrutas').value) || 0;
+            const compras105 = parseFloat(document.getElementById('compras105').value) || 0;
+            const compras21 = parseFloat(document.getElementById('compras21').value) || 0;
+
+            // 2. CALCULATE VAT DEBIT (from sales)
+            // Formula: (Gross Amount / 1.105) * 0.105
+            const ivaVentas = (ventasBrutas / 1.105) * 0.105;
+
+            // 3. CALCULATE VAT CREDIT (from purchases)
+            const ivaCompras105 = (compras105 / 1.105) * 0.105;
+            const ivaCompras21 = (compras21 / 1.21) * 0.21;
+            const totalCreditoFiscal = ivaCompras105 + ivaCompras21;
+
+            // 4. CALCULATE FINAL BALANCE
+            const saldoFinal = ivaVentas - totalCreditoFiscal;
+
+            // 5. DISPLAY RESULTS: Update the DOM with the calculated values.
+            const resultadosDiv = document.getElementById('resultados');
+            resultadosDiv.classList.remove('hidden'); // Make the results section visible
+
+            document.getElementById('debitoFiscal').innerText = formatoMoneda.format(ivaVentas);
+            document.getElementById('creditoFiscal').innerText = formatoMoneda.format(totalCreditoFiscal);
+
+            const resultadoFinalDiv = document.getElementById('resultado-final');
+            const etiquetaFinalSpan = document.getElementById('etiquetaFinal');
+            const ivaPagarSpan = document.getElementById('ivaPagar');
+
+            // Determine if the balance is payable or in favor and apply styles accordingly.
+            if (saldoFinal >= 0) {
+                etiquetaFinalSpan.innerText = "💰 Saldo a Pagar a AFIP";
+                ivaPagarSpan.innerText = formatoMoneda.format(saldoFinal);
+                resultadoFinalDiv.className = 'mt-4 p-4 rounded-lg text-center bg-red-100 text-red-800';
+            } else {
+                etiquetaFinalSpan.innerText = "✅ Saldo a Favor";
+                ivaPagarSpan.innerText = formatoMoneda.format(Math.abs(saldoFinal)); // Show as a positive number
+                resultadoFinalDiv.className = 'mt-4 p-4 rounded-lg text-center bg-green-100 text-green-800';
+            }
+        }
+
+        /**
+         * Clears all input fields and hides the results section.
+         */
+        function limpiarCampos() {
+            document.getElementById('ventasBrutas').value = '';
+            document.getElementById('compras105').value = '';
+            document.getElementById('compras21').value = '';
+            document.getElementById('resultados').classList.add('hidden');
+        }
+    </script>
+
+</body>
+</html>
